@@ -1,48 +1,67 @@
 import "./App.module.css";
 import SearchBar from "../SearchBar/SearchBar";
 import toast, { Toaster } from "react-hot-toast";
-
+import css from "./App.module.css";
 import { fetchMovies } from "../../services/movieService";
 import type { Movie } from "../../types/movie";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import MovieGrid from "../MovieGrid/MovieGrid";
 import Loader from "../Loader/Loader";
 import MovieModal from "../MovieModal/MovieModal";
+import ReactPaginate from "react-paginate";
 
 export default function App() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // зберігаємо пошуковий запит
+  const [query, setQuery] = useState("");
+  // номер сторінки
+  const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const handleSearch = async (query: string) => {
-    try {
-      setError(false);
-      setLoading(true);
-      setMovies([]);
+  //React Query для отримання даних
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["movies", query, page],
+    queryFn: () => fetchMovies(query, page),
+    enabled: !!query, // запит виконується тільки якщо є пошуковий запит
+    keepPreviousData: true, // зберігає попередні дані при зміні сторінки
+  });
 
-      const results = await fetchMovies(query);
-      if (results.length === 0) {
-        toast("No movies found for your request.");
-        return;
-      }
-      setMovies(results);
-    } catch {
-      setError(true);
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+  const handleSearch = (newQuery: string) => {
+    setQuery(newQuery);
+    setPage(1); // скидаємо пагінацію при новому пошуку
   };
+
+  //дані з відповіді
+  const movies = data?.results ?? [];
+  const totalPages = data?.total_pages ?? 0;
+
+  //повідомлення, якщо результатів немає
+  if (!isLoading && query && movies.length === 0 && !isError) {
+    toast("No movies found for your request.");
+  }
 
   return (
     <>
       <SearchBar onSubmit={handleSearch} />
-      {error && <ErrorMessage />}
+      {/* Пагінація */}
+      {totalPages > 1 && (
+        <ReactPaginate
+          pageCount={totalPages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={({ selected }) => setPage(selected + 1)}
+          forcePage={page - 1}
+          containerClassName={css.pagination}
+          activeClassName={css.active}
+          nextLabel="→"
+          previousLabel="←"
+        />
+      )}
+      {isError && <ErrorMessage />}
       <Toaster position="bottom-right" reverseOrder={false} />
-      {loading && <Loader />}
-      {!loading && !error && movies.length > 0 && (
+      {isLoading && <Loader />}
+      {!isLoading && !isError && movies.length > 0 && (
         <MovieGrid
           movies={movies}
           onSelect={(movie) => setSelectedMovie(movie)}

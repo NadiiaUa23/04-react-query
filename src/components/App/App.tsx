@@ -24,7 +24,7 @@ export default function App() {
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: !!query, // запит виконується тільки якщо є пошуковий запит
-    keepPreviousData: true, // зберігає попередні дані при зміні сторінки
+    placeholderData: (prev) => prev, // зберігає попередні дані при зміні сторінки
   });
 
   const handleSearch = (newQuery: string) => {

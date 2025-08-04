@@ -38,7 +38,7 @@ export default function App() {
 
   //повідомлення, якщо результатів немає
   if (!isLoading && query && movies.length === 0 && !isError) {
-    toast("No movies found for your request.");
+    toast.error("No movies found for your request.");
   }
 
   return (
@@ -59,7 +59,7 @@ export default function App() {
         />
       )}
       {isError && <ErrorMessage />}
-      <Toaster position="bottom-right" reverseOrder={false} />
+      <Toaster position="top-center" reverseOrder={false} />
       {isLoading && <Loader />}
       {!isLoading && !isError && movies.length > 0 && (
         <MovieGrid

@@ -1,7 +1,10 @@
 import css from "./ErrorMessage.module.css";
+interface ErrorMessageProps {
+  message: string;
+}
 
-function ErrorMessage() {
-  return <p className={css.text}>There was an error, please try again...</p>;
+function ErrorMessage({ message }: ErrorMessageProps) {
+  return <p className={css.text}>{message}</p>;
 }
 
 export default ErrorMessage;

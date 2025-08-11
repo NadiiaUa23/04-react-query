@@ -14,6 +14,7 @@ import MovieGrid from "../MovieGrid/MovieGrid";
 import Loader from "../Loader/Loader";
 import MovieModal from "../MovieModal/MovieModal";
 import ReactPaginate from "react-paginate";
+import type { AxiosError } from "axios";
 
 export default function App() {
   // зберігаємо пошуковий запит
@@ -25,7 +26,7 @@ export default function App() {
   //React Query для отримання даних
   const { data, error, isError, isLoading, isSuccess } = useQuery<
     MoviesHttpResponse,
-    Error
+    AxiosError
   >({
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
@@ -70,7 +71,11 @@ export default function App() {
         />
       )}
 
-      {isError && <ErrorMessage message={error.message} />}
+      {isError && (
+        <ErrorMessage
+          message={error?.response?.data?.message || "Something went wrong"}
+        />
+      )}
       <Toaster position="top-center" reverseOrder={false} />
       {isLoading && <Loader />}
       {!isLoading && !isError && movies.length > 0 && (

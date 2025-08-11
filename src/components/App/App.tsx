@@ -2,10 +2,7 @@ import "./App.module.css";
 import SearchBar from "../SearchBar/SearchBar";
 import toast, { Toaster } from "react-hot-toast";
 import css from "./App.module.css";
-import {
-  fetchMovies,
-  type MoviesHttpResponse,
-} from "../../services/movieService";
+import { fetchMovies } from "../../services/movieService";
 import type { Movie } from "../../types/movie";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,49 +11,37 @@ import MovieGrid from "../MovieGrid/MovieGrid";
 import Loader from "../Loader/Loader";
 import MovieModal from "../MovieModal/MovieModal";
 import ReactPaginate from "react-paginate";
-import type { AxiosError } from "axios";
 
 export default function App() {
-  // зберігаємо пошуковий запит
   const [query, setQuery] = useState("");
-  // номер сторінки
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  //React Query для отримання даних
-  const { data, error, isError, isLoading, isSuccess } = useQuery<
-    MoviesHttpResponse,
-    AxiosError
-  >({
+  const { data, isError, isLoading, isSuccess } = useQuery({
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
-    enabled: query.trim() !== "", // запит виконується тільки якщо є пошуковий запит
-    placeholderData: (prev) => prev, // зберігає попередні дані при зміні сторінки
+    enabled: query.trim() !== "",
+    placeholderData: (prev) => prev, // зберігає попередні дані
   });
-  useEffect(() => {
-    if (isSuccess && data?.results.length === 0) {
-      toast("No novies found for your request.");
-    }
-  }, [isSuccess, data]);
 
-  const handleSearch = (newQuery: string) => {
-    setQuery(newQuery);
-    setPage(1); // скидаємо пагінацію при новому пошуку
-  };
-
-  // дані з відповіді
   const movies = data?.results ?? [];
   const totalPages = data?.total_pages ?? 0;
 
-  // повідомлення, якщо результатів немає
-  // if (!isLoading && query && movies.length === 0 && !isError) {
-  //   toast.error("No movies found for your request.");
-  // }
+  useEffect(() => {
+    if (isSuccess && movies.length === 0) {
+      toast("No movies found for your request.");
+    }
+  }, [isSuccess, movies]);
+
+  const handleSearch = (newQuery: string) => {
+    setQuery(newQuery);
+    setPage(1);
+  };
 
   return (
     <>
       <SearchBar onSubmit={handleSearch} />
-      {/* Пагінація */}
+
       {totalPages > 1 && (
         <ReactPaginate
           pageCount={totalPages}
@@ -71,19 +56,17 @@ export default function App() {
         />
       )}
 
-      {isError && (
-        <ErrorMessage
-          message={error?.response?.data?.message || "Something went wrong"}
-        />
-      )}
+      {isError && <ErrorMessage />}
       <Toaster position="top-center" reverseOrder={false} />
       {isLoading && <Loader />}
+
       {!isLoading && !isError && movies.length > 0 && (
         <MovieGrid
           movies={movies}
           onSelect={(movie) => setSelectedMovie(movie)}
         />
       )}
+
       {selectedMovie && (
         <MovieModal
           movie={selectedMovie}

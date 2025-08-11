@@ -15,7 +15,7 @@ export const fetchMovies = async (
   query: string,
   page: number = 1
 ): Promise<MoviesHttpResponse> => {
-  const response = await axios.get<MoviesHttpResponse, Error>(API_URL, {
+  const response = await axios.get<MoviesHttpResponse>(API_URL, {
     params: {
       query,
       page,
